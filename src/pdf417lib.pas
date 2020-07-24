@@ -98,6 +98,8 @@ procedure pdf417free(p: pPdf417param);
 
 implementation
 
+uses AnsiStrings;
+
 const
   MIXED_SET = '0123456789&'#13#9',:#-.$/+%*=^';
   PUNCTUATION_SET = ';<>@[\]_`~!'#13#9',:'#10'-.$/"|*()?{}''';
@@ -279,7 +281,6 @@ var
   codePtr: Integer;
   row: Integer;
   rowMod: Integer;
-  cluster: ^Integer;
   edge: Integer;
   column: Integer;
   i: Integer;
@@ -292,17 +293,16 @@ begin
   begin
     p.bitPtr := ((p.param.bitColumns - 1) div 8 + 1) * 8 * row;
     rowMod := row mod 3;
-    cluster := @CLUSTERS[rowMod][0];
     outStartPattern(p);
     case rowMod of
       0: edge := 30 * (row div 3) + ((p.param.codeRows - 1) div 3);
       1: edge := 30 * (row div 3) + p.param.errorLevel * 3 + ((p.param.codeRows - 1) mod 3);
       else edge := 30 * (row div 3) + p.param.codeColumns - 1;
     end;
-    outCodeword(p, TIntArray(cluster)[edge]);
+    outCodeword(p, CLUSTERS[rowMod][edge]);
     for column := 0 to p.param.codeColumns - 1 do
     begin
-      outCodeword(p, TIntArray(cluster)[p.param.codewords[codePtr]]);
+      outCodeword(p, CLUSTERS[rowMod][p.param.codewords[codePtr]]);
       Inc(codePtr);
     end;
     case rowMod of
@@ -310,7 +310,7 @@ begin
       1: edge := 30 * (row div 3) + ((p.param.codeRows - 1) div 3);
       else edge := 30 * (row div 3) + p.param.errorLevel * 3 + ((p.param.codeRows - 1) mod 3);
     end;
-    outCodeword(p, TIntArray(cluster)[edge]);
+    outCodeword(p, CLUSTERS[rowMod][edge]);
     outStopPattern(p);
   end;
   if p.param.options and PDF417_INVERT_BITMAP <> 0 then
@@ -351,6 +351,19 @@ begin
     TIntArray(E)[j] := (CMOD - TIntArray(E)[j]) mod CMOD;
 end;
 
+function AnsiCharPos(aCh: AnsiChar; const S: AnsiString): Integer;
+var
+  i: Integer;
+begin
+  Result := 0;
+  for i := 1 to Length(S) do
+    if S[i] = aCh then
+    begin
+      Result := i;
+      Break;
+    end;
+end;
+
 function getTextTypeAndValue(text: PAnsiChar; size: Integer; idx: Integer): Integer;
 var
   c: AnsiChar;
@@ -377,8 +390,8 @@ begin
     Result := ALPHA + LOWER + MIXED + SPACE;
     Exit;
   end;
-  ms := Pos(c, MIXED_SET);
-  ps := Pos(c, PUNCTUATION_SET);
+  ms := AnsiCharPos(c, MIXED_SET);
+  ps := AnsiCharPos(c, PUNCTUATION_SET);
   if (ms = 0) and (ps = 0) then
   begin
     Result := ISBYTE + (Ord(c) and $ff);
@@ -1007,7 +1020,7 @@ begin
   else
   begin
     if p.lenText < 0 then
-      p.lenText := StrLen(p.text);
+      p.lenText := AnsiStrings.StrLen(p.text);
     if p.lenText > ABSOLUTE_MAX_TEXT_SIZE then
     begin
       p.error := PDF417_ERROR_TEXT_TOO_BIG;
