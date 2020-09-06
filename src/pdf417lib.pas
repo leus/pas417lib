@@ -277,10 +277,14 @@ begin
 end;
 
 procedure outPaintCode(p: pPdf417class);
+type
+  TWidthArray = array[0..928] of Integer;
+  PWidthArray = ^TWidthArray;
 var
   codePtr: Integer;
   row: Integer;
   rowMod: Integer;
+  cluster: ^Integer;
   edge: Integer;
   column: Integer;
   i: Integer;
@@ -293,16 +297,17 @@ begin
   begin
     p.bitPtr := ((p.param.bitColumns - 1) div 8 + 1) * 8 * row;
     rowMod := row mod 3;
+    cluster := @CLUSTERS[rowMod][0];
     outStartPattern(p);
     case rowMod of
       0: edge := 30 * (row div 3) + ((p.param.codeRows - 1) div 3);
       1: edge := 30 * (row div 3) + p.param.errorLevel * 3 + ((p.param.codeRows - 1) mod 3);
       else edge := 30 * (row div 3) + p.param.codeColumns - 1;
     end;
-    outCodeword(p, CLUSTERS[rowMod][edge]);
+    outCodeword(p, PWidthArray(cluster)^[edge]);
     for column := 0 to p.param.codeColumns - 1 do
     begin
-      outCodeword(p, CLUSTERS[rowMod][p.param.codewords[codePtr]]);
+      outCodeword(p, PWidthArray(cluster)^[p.param.codewords[codePtr]]);
       Inc(codePtr);
     end;
     case rowMod of
@@ -310,7 +315,7 @@ begin
       1: edge := 30 * (row div 3) + ((p.param.codeRows - 1) div 3);
       else edge := 30 * (row div 3) + p.param.errorLevel * 3 + ((p.param.codeRows - 1) mod 3);
     end;
-    outCodeword(p, CLUSTERS[rowMod][edge]);
+    outCodeword(p, PWidthArray(cluster)^[edge]);
     outStopPattern(p);
   end;
   if p.param.options and PDF417_INVERT_BITMAP <> 0 then

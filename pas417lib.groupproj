@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{504E1643-1520-4664-B514-868CE937EF5F}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="packages\pdf417vcl.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="packages\pdf417_frx.dproj">
+            <Dependencies>packages\pdf417vcl.dproj</Dependencies>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="pdf417vcl">
+        <MSBuild Projects="packages\pdf417vcl.dproj"/>
+    </Target>
+    <Target Name="pdf417vcl:Clean">
+        <MSBuild Projects="packages\pdf417vcl.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="pdf417vcl:Make">
+        <MSBuild Projects="packages\pdf417vcl.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="pdf417_frx" DependsOnTargets="pdf417vcl">
+        <MSBuild Projects="packages\pdf417_frx.dproj"/>
+    </Target>
+    <Target Name="pdf417_frx:Clean" DependsOnTargets="pdf417vcl:Clean">
+        <MSBuild Projects="packages\pdf417_frx.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="pdf417_frx:Make" DependsOnTargets="pdf417vcl:Make">
+        <MSBuild Projects="packages\pdf417_frx.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="pdf417vcl;pdf417_frx"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="pdf417vcl:Clean;pdf417_frx:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="pdf417vcl:Make;pdf417_frx:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
